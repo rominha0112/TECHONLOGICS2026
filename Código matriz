@@ -1,0 +1,91 @@
+import motor_pair
+import runloop
+import motor
+from hub import port, motion_sensor
+# Bibliotecas nescessárias para o código, que permitem existirem pares de motores, rodar os arquivos no main, permite usar o motor indvidual da garra,conectar nas entradas e usar giroscópio respectivamente.
+# ----------------------
+# CONFIGURAÇÃO
+# ----------------------
+PAR_MOTORES = motor_pair.PAIR_1 # O par de motores.
+MOTOR_ESQUERDO = port.C # Motor esquerdo do par.
+MOTOR_DIREITO = port.D#Motor direito do par.
+motor_pair.pair(PAR_MOTORES, MOTOR_ESQUERDO, MOTOR_DIREITO)# Declaração do motor pair.
+
+# ----------------------
+# GARRA
+# ----------------------
+async def mover_garra1(graus, velocidade): #Função de movimento da primeira garra, parâmetros quantidade de giro(graus) e velocidade(porcentagem).
+    await motor.run_for_degrees(        #Função do próprio spike para mover um motor por graus.
+        port.E, # Porta correspondente
+        graus,
+        velocidade * 18
+    )
+async def mover_garra2(graus, velocidade): # A mesma coisa com a garra da porta E.
+    await motor.run_for_degrees(
+        port.A,
+        graus,
+        velocidade * 18
+    )
+
+# ----------------------
+# ANDAR RETO COM PID (POR GRAUS)
+# ----------------------
+async def pid(posicao_alvo): # Parâmetros: Posição que o robô deve percorer em cm * 200.
+    motor.reset_relative_position(port.D, 0) # Reseta os motores
+    motor.reset_relative_position(port.C, 0)
+    erro = motion_sensor.tilt_angles()[0] - posicao_alvo # Erro = posição atual - posição desejada
+    correcao = 1.2 * erro # correção do erro para dar precisão.
+    esquerda = int(10000 - correcao) # Correção por cada motor
+    direita = int(10000 + correcao)
+    await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1,int(posicao_alvo),esquerda,direita) # Função do spike que realmentemovimenta o robô.
+#formula do calculo: posiÇão hipotética x 200
+
+# ----------------------
+# MOVER RETO SIMPLES
+# ----------------------
+async def mover(cm, velocidade=200): # Movimentação simples.
+    circunferencia = 16.014 # Circunferência da roda azul, caso mude para outra roda, mude essa variável.
+    cm_distancia = int((cm / circunferencia) * 360) # Calculo da distancia em cm
+
+    await motor_pair.move_for_degrees( # Função do spike que move o robô de fato.
+        motor_pair.PAIR_1,# Atrela a função ao par de motores.
+        cm_distancia,
+        0,
+        velocity=velocidade * 18
+    )
+motor_pair.stop(motor_pair.PAIR_1, stop=motor.BRAKE)# garante que o robô irá parar.
+
+
+# ----------------------
+# GIRO COM GIROSCÓPIO
+# ----------------------
+async def giro_com_giroscopio(angulo_alvo): #Informe apenas quanto o robô irá girar.
+    motion_sensor.reset_yaw(0) # Reseta o giro(yaw)
+    await runloop.sleep_ms(500)# Delay de meio segundo
+
+    if angulo_alvo > 0: #Faz a rotação positiva ou negativa.
+        vel_esq, vel_dir = 1000, -1000
+    else:
+        vel_esq, vel_dir = -1000, 1000
+
+    while abs(motion_sensor.tilt_angles()[0]) < abs((angulo_alvo - 3) * 8): # Enquanto a posição atual for maior que o alvocom coreção ele continua girando e depois para.
+        motor_pair.move_tank(motor_pair.PAIR_1, vel_esq, vel_dir)
+        await runloop.sleep_ms(10)
+
+    motor_pair.stop(motor_pair.PAIR_1)
+
+# ----------------------
+# ESPERAR
+# ----------------------
+async def esperar(segundos): # Apenas espera um pouco em segundos.
+    await runloop.sleep_ms(segundos * 1000)
+
+# ----------------------
+# MAIN
+# ----------------------
+async def main(): # coloque as funções aqui abaixo:
+   
+
+
+
+runloop.run(main())
