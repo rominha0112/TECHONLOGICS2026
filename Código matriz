@@ -30,15 +30,16 @@ async def mover_garra2(graus, velocidade): # A mesma coisa com a garra da porta 
 # ----------------------
 # ANDAR RETO COM PID (POR GRAUS)
 # ----------------------
-async def pid(posicao_alvo): # Parâmetros: Posição que o robô deve percorer em cm * 200.
+async def pid(posicao_alvo): # Parâmetros: Posição que o robô deve percorer em cm * 20.
+    posicao_alvo2 = posicao_alvo *20
     motor.reset_relative_position(port.D, 0) # Reseta os motores
     motor.reset_relative_position(port.C, 0)
-    erro = motion_sensor.tilt_angles()[0] - posicao_alvo # Erro = posição atual - posição desejada
+    erro = motion_sensor.tilt_angles()[0] - posicao_alvo2 # Erro = posição atual - posição desejada
     correcao = 1.2 * erro # correção do erro para dar precisão.
     esquerda = int(10000 - correcao) # Correção por cada motor
     direita = int(10000 + correcao)
-    await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1,int(posicao_alvo),esquerda,direita) # Função do spike que realmentemovimenta o robô.
-#formula do calculo: posiÇão hipotética x 200
+    await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1,int(posicao_alvo2),esquerda,direita) # Função do spike que realmentemovimenta o robô.
+#formula do calculo: posiÇão hipotética x 20
 
 # ----------------------
 # MOVER RETO SIMPLES
@@ -59,7 +60,10 @@ motor_pair.stop(motor_pair.PAIR_1, stop=motor.BRAKE)# garante que o robô irá p
 # ----------------------
 # GIRO COM GIROSCÓPIO
 # ----------------------
-async def giro_com_giroscopio(angulo_alvo): #Informe apenas quanto o robô irá girar.
+async def giro(angulo_alvo): #Informe apenas quanto o robô irá girar.
+    angulo_alvo2 = angulo_alvo *3
+    motor.reset_relative_position(port.D, 0) 
+    motor.reset_relative_position(port.C, 0)
     motion_sensor.reset_yaw(0) # Reseta o giro(yaw)
     await runloop.sleep_ms(500)# Delay de meio segundo
 
@@ -67,11 +71,14 @@ async def giro_com_giroscopio(angulo_alvo): #Informe apenas quanto o robô irá 
         vel_esq, vel_dir = 1000, -1000
     else:
         vel_esq, vel_dir = -1000, 1000
-
-    while abs(motion_sensor.tilt_angles()[0]) < abs((angulo_alvo - 3) * 8): # Enquanto a posição atual for maior que o alvocom coreção ele continua girando e depois para.
-        motor_pair.move_tank(motor_pair.PAIR_1, vel_esq, vel_dir)
-        await runloop.sleep_ms(10)
-
+    if angulo_alvo > 0:
+        while abs(motion_sensor.tilt_angles()[0]) < abs(angulo_alvo2 + 280): # Enquanto a posição atual for maior que o alvo  ele continua girando e depois para.
+            motor_pair.move_tank(motor_pair.PAIR_1, vel_esq, vel_dir)
+            await runloop.sleep_ms(10)
+    else:
+        while abs(motion_sensor.tilt_angles()[0]) < abs(angulo_alvo2 - 280): # Enquanto a posição atual for maior que o alvoele continua girando e depois para.
+            motor_pair.move_tank(motor_pair.PAIR_1, vel_esq, vel_dir)
+            await runloop.sleep_ms(10)
     motor_pair.stop(motor_pair.PAIR_1)
 
 # ----------------------
@@ -84,8 +91,7 @@ async def esperar(segundos): # Apenas espera um pouco em segundos.
 # MAIN
 # ----------------------
 async def main(): # coloque as funções aqui abaixo:
-   
-
+    await pid(30)
 
 
 runloop.run(main())
