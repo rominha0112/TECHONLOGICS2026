@@ -15,15 +15,17 @@ motor_pair.pair(PAR_MOTORES, MOTOR_ESQUERDO, MOTOR_DIREITO)# Declaração do mot
 # GARRA
 # ----------------------
 async def mover_garra1(graus, velocidade): #Função de movimento da primeira garra, parâmetros quantidade de giro(graus) e velocidade(porcentagem).
-    await motor.run_for_degrees(        #Função do próprio spike para mover um motor por graus.
+    motor.reset_relative_position(port.E, 0)
+    await motor.run_for_degrees(   #Função do próprio spike para mover um motor por graus.
         port.E, # Porta correspondente
-        graus,
+        int(graus * 2.49),
         velocidade * 18
     )
 async def mover_garra2(graus, velocidade): # A mesma coisa com a garra da porta E.
+    motor.reset_relative_position(port.A, 0)
     await motor.run_for_degrees(
         port.A,
-        graus,
+        int(graus * 2.49),
         velocidade * 18
     )
 
@@ -62,7 +64,7 @@ motor_pair.stop(motor_pair.PAIR_1, stop=motor.BRAKE)# garante que o robô irá p
 # ----------------------
 async def giro(angulo_alvo): #Informe apenas quanto o robô irá girar.
     angulo_alvo2 = angulo_alvo *3
-    motor.reset_relative_position(port.D, 0) 
+    motor.reset_relative_position(port.D, 0)
     motor.reset_relative_position(port.C, 0)
     motion_sensor.reset_yaw(0) # Reseta o giro(yaw)
     await runloop.sleep_ms(500)# Delay de meio segundo
@@ -72,7 +74,7 @@ async def giro(angulo_alvo): #Informe apenas quanto o robô irá girar.
     else:
         vel_esq, vel_dir = -1000, 1000
     if angulo_alvo > 0:
-        while abs(motion_sensor.tilt_angles()[0]) < abs(angulo_alvo2 + 280): # Enquanto a posição atual for maior que o alvo  ele continua girando e depois para.
+        while abs(motion_sensor.tilt_angles()[0]) < abs(angulo_alvo2 + 280): # Enquanto a posição atual for maior que o alvoele continua girando e depois para.
             motor_pair.move_tank(motor_pair.PAIR_1, vel_esq, vel_dir)
             await runloop.sleep_ms(10)
     else:
@@ -91,7 +93,7 @@ async def esperar(segundos): # Apenas espera um pouco em segundos.
 # MAIN
 # ----------------------
 async def main(): # coloque as funções aqui abaixo:
-    await pid(30)
-
-
+    await esperar(3)
+    await mover(90)
 runloop.run(main())
+
