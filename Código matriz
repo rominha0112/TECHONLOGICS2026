@@ -3,20 +3,15 @@ import runloop
 import motor
 from hub import port, motion_sensor
 
-# ----------------------
-# CONFIGURAÇÃO
-# ----------------------
 PAR_MOTORES = motor_pair.PAIR_1
 MOTOR_ESQUERDO = port.C
 MOTOR_DIREITO = port.D
 motor_pair.pair(PAR_MOTORES, MOTOR_ESQUERDO, MOTOR_DIREITO)
 
-# ----------------------
-# GARRA
-# ----------------------
+#-----------------------------------------
+
 async def mover_garra1(graus, velocidade):
     motor.reset_relative_position(port.E, 0)
-    
     vel_final = max(-1000, min(1000, int(velocidade * 18)))
     await motor.run_for_degrees(
         port.E,
@@ -29,13 +24,12 @@ async def mover_garra2(graus, velocidade):
     vel_final = max(-1000, min(1000, int(velocidade * 18)))
     await motor.run_for_degrees(
         port.A,
-        int(graus * 2.49),
-        vel_final
+        int(graus * 2.49 ),
+        vel_final   
     )
 
-# ----------------------
-# ANDAR RETO COM PID (POR GRAUS)
-# ----------------------
+#-----------------------------------------
+
 async def pid(graus_alvo):
     motor.reset_relative_position(port.D, 0)
     motor.reset_relative_position(port.C, 0)
@@ -48,66 +42,54 @@ async def pid(graus_alvo):
     esquerda = max(-1000, min(1000, esquerda))
     direita = max(-1000, min(1000, direita))
 
-    await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, int(graus_alvo), esquerda, direita)
+    await motor_pair.move_tank_for_degrees(
+        motor_pair.PAIR_1,
+        int(graus_alvo),
+        esquerda,
+        direita
+    )
 
-# ----------------------
-# MOVER RETO SIMPLES
-# ----------------------
-async def mover(cm, velocidade=40): # Velocidade em % (padrão 40% para estabilidade)
+#-----------------------------------------
+
+async def mover(cm, velocidade=40):
     circunferencia = 16.014
     cm_distancia = int((cm / circunferencia) * 360)
-
-    # Converte % para graus/segundo (máximo 1000)
     vel_deg_s = max(-1000, min(1000, int(velocidade * 10)))
 
     await motor_pair.move_for_degrees(
         motor_pair.PAIR_1,
         cm_distancia,
-        0, # Direção reta
+        0,
         velocity=vel_deg_s
     )
     motor_pair.stop(motor_pair.PAIR_1, stop=motor.BRAKE)
 
-# ----------------------
-# GIRO COM GIROSCÓPIO
-# ----------------------
-async def giro(angulo_alvo):
-    # Reseta o sensor de guinada (Yaw) para garantir leitura limpa
-    motion_sensor.reset_yaw(0)
-    await runloop.sleep_ms(500) # Estabilização do sensor
+#-----------------------------------------
 
-    # Define velocidades seguras para giro (300 deg/s)
+async def giro(angulo_alvo):
+    motion_sensor.reset_yaw(0)
+    await runloop.sleep_ms(500)
+
     if angulo_alvo > 0:
         vel_esq, vel_dir = 300, -300
     else:
         vel_esq, vel_dir = -300, 300
 
-    # Multiplicador do giroscópio do SPIKE v3 geralmente é 10 para décimos de grau
     alvo_decimos = abs(angulo_alvo * 10)
 
-    # Laço unificado: lê o valor absoluto atual e compara com o alvo absoluto
     while abs(motion_sensor.tilt_angles()[0]) < alvo_decimos:
         motor_pair.move_tank(motor_pair.PAIR_1, vel_esq, vel_dir)
         await runloop.sleep_ms(10)
 
     motor_pair.stop(motor_pair.PAIR_1, stop=motor.BRAKE)
 
-# ----------------------
-# ESPERAR
-# ----------------------
 async def esperar(segundos):
     await runloop.sleep_ms(int(segundos * 1000))
 
-# ----------------------
-# MAIN
-# ----------------------
-async def main():    
-    await pid(-900) # Anda 90cm a 50% de velocidade
+#-----------------------------------------
 
-runloop.run(main())
-
-async def main(): # coloque as funções aqui abaixo:
+async def main():
     await esperar(3)
     await mover(90)
-runloop.run(main())
 
+runloop.run(main())
