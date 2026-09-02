@@ -1,0 +1,101 @@
+import motor_pair
+import runloop
+import motor
+from hub import port, motion_sensor
+
+PAR_MOTORES = motor_pair.PAIR_1
+MOTOR_ESQUERDO = port.C
+MOTOR_DIREITO = port.D
+motor_pair.pair(PAR_MOTORES, MOTOR_ESQUERDO, MOTOR_DIREITO)
+
+#-----------------------------------------
+
+async def mover_garra1(graus, velocidade):
+    motor.reset_relative_position(port.E, 0)
+    vel_final = max(-1000, min(1000, int(velocidade * 18)))
+    await motor.run_for_degrees(
+        port.E,
+        int(graus * 2.49),
+        vel_final
+    )
+
+async def mover_garra2(graus, velocidade):
+    motor.reset_relative_position(port.A, 0)
+    vel_final = max(-1000, min(1000, int(velocidade * 18)))
+    await motor.run_for_degrees(
+        port.A,
+        int(graus * 2.49 ),
+        vel_final
+    )
+
+#-----------------------------------------
+
+async def pid(cm):
+    motor.reset_relative_position(port.D, 0)
+    motor.reset_relative_position(port.C, 0)
+    angulo_atual = motion_sensor.tilt_angles()[0]
+    cm =int(cm * 20)
+    erro = 0 - angulo_atual
+    correcao = 0.001 * erro
+    velocidade_base = 500
+    esquerda = int(velocidade_base - correcao)
+    direita = int(velocidade_base + correcao)
+    esquerda = max(-1000, min(1000, esquerda))
+    direita = max(-1000, min(1000, direita))
+
+    await motor_pair.move_tank_for_degrees(
+        motor_pair.PAIR_1,
+        int(cm),
+        esquerda,
+        direita
+    )
+
+#-----------------------------------------
+
+async def mover(cm, velocidade=500):
+    circunferencia = 16.014
+    cm_distancia = int((cm / circunferencia) * 360)
+    vel_deg_s = max(-1000, min(1000, int(velocidade * 10)))
+
+    await motor_pair.move_for_degrees(
+        motor_pair.PAIR_1,
+        cm_distancia,
+        0,
+        velocity=vel_deg_s
+    )
+    motor_pair.stop(motor_pair.PAIR_1, stop=motor.BRAKE)
+
+#-----------------------------------------
+
+async def giro(angulo_alvo):
+    motion_sensor.reset_yaw(0)
+    await runloop.sleep_ms(500)
+
+    if angulo_alvo > 0:
+        vel_esq, vel_dir = 500, -300
+    else:
+        vel_esq, vel_dir = -500, 300
+
+    alvo_decimos = abs(angulo_alvo * 10)
+
+    while abs(motion_sensor.tilt_angles()[0]) < alvo_decimos:
+        motor_pair.move_tank(motor_pair.PAIR_1, vel_esq, vel_dir)
+        await runloop.sleep_ms(10)
+
+    motor_pair.stop(motor_pair.PAIR_1, stop=motor.BRAKE)
+
+async def esperar(segundos):
+    await runloop.sleep_ms(int(segundos * 1000))
+
+#-----------------------------------------
+
+async def main():
+    await pid (85)
+    await giro (-20)
+    await pid(8)
+    await giro(-30)
+    await mover(-10)
+    await giro (50)
+
+    await pid (-30)
+runloop.run(main())
