@@ -91,25 +91,23 @@ async def esperar(segundos):
 
 async def main():
     await mover_garra1G(130,50)
-    await pid (86,600)
-    await giro (-30,250) 
-    await pid (5, 500)
+    await pid (84,600)
+    await giro (-20,250)
+    await pid (6, 500)
     await giro (-35, 300)
     await giro(35,500)
-    await pid(-21,400)
+    await pid(-19.5,400)
     await giro(-50,200)
-    await mover(-7,100)
-    await pid(57,600)
-    await giro(-70,250)
-    await mover(-7)
-    await mover_garra1G(250,100)
+    await mover(-5,100)
+    await pid(50,600)
+    await giro(-80,250)
+    await mover(-5)
+    await mover_garra1G(250,50)
     await esperar(1.5)
-    await mover(1,25)
-    await mover_garra1G(-70,100)
-    await mover(2,50)
-    
+    await mover_garra1G(60,100)
 
 
-    
+
+
 
 runloop.run(main())
