@@ -1,0 +1,165 @@
+from pybricks.hubs import PrimeHub
+from pybricks.pupdevices import Motor
+from pybricks.parameters import Port, Direction
+from pybricks.robotics import DriveBase
+from pybricks.tools import wait
+
+
+# =========================================
+# CONFIGURAÇÃO
+# =========================================
+
+hub = PrimeHub()
+
+motor_esquerdo = Motor(Port.C, Direction.COUNTERCLOCKWISE)
+motor_direito = Motor(Port.D, Direction.CLOCKWISE)
+garra1 = Motor(Port.E)
+garra2 = Motor(Port.A)
+
+RODA_DIAMETRO = 5.1
+DISTANCIA_EIXOS = 12
+CIRCUNFERENCIA_RODA = 16.014
+
+
+robo = DriveBase(
+    motor_esquerdo,
+    motor_direito,
+    RODA_DIAMETRO,
+    DISTANCIA_EIXOS
+)
+
+
+# =========================================
+# GARRA 1
+# =========================================
+
+def mover_garra1G(graus, velocidade):
+    velocidade = max(-1000, min(1000, int(velocidade * 10)))
+
+    garra1.run_angle(
+        velocidade,
+        int(graus * 2.49),
+        wait=True
+    )
+
+
+# =========================================
+# GARRA 2
+# =========================================
+
+def mover_garra2P(graus, velocidade):
+    velocidade = max(-1000, min(1000, int(velocidade * 10)))
+
+    garra2.run_angle(
+        velocidade,
+        int(graus * 2.49),
+        wait=True
+    )
+
+
+# =========================================
+# MOVIMENTO RETO COM CORREÇÃO DO IMU
+# =========================================
+
+def pid(cm):
+    motor_esquerdo.reset_angle(0)
+    motor_direito.reset_angle(0)
+
+    angulo_atual = int(hub.imu.heading())
+    velocidade_base = 10
+    graus_alvo = int((cm / 16.014) * 360)
+
+    if graus_alvo > 0:
+
+        while cm > abs(motor_direito.angle()):
+
+            erro = hub.imu.heading() - cm
+            correcao = 6 * erro
+
+            esquerda = int(velocidade_base - correcao)
+            direita = int(velocidade_base + correcao)
+
+            esquerda = max(-500, min(500, esquerda))
+            direita = max(-500, min(500, direita))
+
+            motor_esquerdo.run(esquerda)
+            motor_direito.run(direita)
+
+            wait(10)
+
+    else:
+
+        while abs(motor_direito.angle()) > cm:
+
+            erro = hub.imu.heading() - cm
+            correcao = 6 * erro
+
+            esquerda = int(velocidade_base - correcao)
+            direita = int(velocidade_base - correcao)
+
+            esquerda = max(-500, min(500, esquerda))
+            direita = max(-500, min(500, direita))
+
+            motor_esquerdo.run(esquerda)
+            motor_direito.run(direita)
+
+            wait(10)
+
+    motor_esquerdo.stop()
+    motor_direito.stop()
+# =========================================
+# MOVER EM CENTÍMETROS
+# =========================================
+
+def mover(cm, velocidade=40):
+
+    velocidade_mm_s = velocidade * 10
+
+    
+
+    robo.straight(cm * 10)
+
+    robo.stop()
+
+
+# =========================================
+# GIRO
+# =========================================
+
+def giro(angulo):
+
+   
+    
+
+    robo.settings(turn_rate= 100)
+    robo.turn(angulo)
+
+    robo.stop()
+# =========================================
+# ESPERAR
+# =========================================
+
+def esperar(segundos):
+    wait(int(segundos * 1000))
+
+
+# =========================================
+# MAIN
+# =========================================
+
+def main():
+
+    pid(300)
+
+    giro(-90)
+
+    mover(40)
+
+    giro(45)
+
+    pid(3)
+
+    mover_garra1G(100, 10)
+
+
+main()
