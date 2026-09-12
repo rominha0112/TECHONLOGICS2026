@@ -1,127 +1,195 @@
-import motor_pair
-import runloop
-import motor
-from hub import port, motion_sensor
+from pybricks.hubs import PrimeHub
+from pybricks.pupdevices import Motor
+from pybricks.parameters import Port, Direction,Stop
+from pybricks.robotics import DriveBase
+from pybricks.tools import wait,StopWatch
+
+hub = PrimeHub()
+motor_esquerdo = Motor(Port.C, Direction.COUNTERCLOCKWISE)
+motor_direito = Motor(Port.D)
+garra1 = Motor(Port.E)
+garra2 = Motor(Port.A)
+cronometro = StopWatch()
+trava_tempo = StopWatch() 
+
+RODA_DIAMETRO = 5.1
+DISTANCIA_EIXOS = 12
+CIRCUNFERENCIA_RODA = 16.022
 
 
-PAR_MOTORES = motor_pair.PAIR_1
-MOTOR_ESQUERDO = port.C
-MOTOR_DIREITO = port.D
-motor_pair.pair(PAR_MOTORES, MOTOR_ESQUERDO, MOTOR_DIREITO)
+robo = DriveBase(
+    motor_esquerdo,
+    motor_direito,
+    RODA_DIAMETRO,
+    DISTANCIA_EIXOS
+)
+robo.settings(
+    straight_speed=200,      
+    straight_acceleration=200,
+    turn_rate=160,           
+    turn_acceleration=200
+)
 
-#-----------------------------------------
 
-async def mover_garra1G(graus, velocidade):
-    motor.reset_relative_position(port.E, 0)
-    vel_final = int(velocidade * 10)
-    await motor.run_for_degrees(
-        port.E,
+# =========================================
+# GARRA 1
+# =========================================
+
+def mover_garra1G(graus, velocidade):
+    velocidade = max(-1000, min(1000, int(velocidade * 10)))
+
+
+    garra1.run_angle(
+        velocidade,
         int(graus * 2.49),
-        vel_final
+        then=Stop.HOLD
     )
 
-async def mover_garra2P(graus, velocidade):
-    motor.reset_relative_position(port.A, 0)
-    vel_final = max(-1000, min(1000, int(velocidade * 10)))
-    await motor.run_for_degrees(
-        port.A,
-        int(graus * 2.49 ),
-        vel_final
+
+# =========================================
+# GARRA 2
+# =========================================
+
+def mover_garra2P(graus, velocidade):
+    velocidade = max(-1000, min(1000, int(velocidade * 10)))
+
+    garra2.run_angle(
+        velocidade,
+        int(graus * 2.49),
+        then=Stop.HOLD
     )
 
-#-----------------------------------------
 
-async def pid(cm,vb):
-    motor.reset_relative_position(port.D, 0)
-    motor.reset_relative_position(port.C, 0)
-    angulo_atual = motion_sensor.tilt_angles()[0]
-    cm =int(cm * 20)
-    erro = 0 - angulo_atual
-    correcao = 0.001 * erro
-    velocidade_base = vb
-    esquerda = int(velocidade_base - correcao)
-    direita = int(velocidade_base + correcao)
-    esquerda = max(-1000, min(1000, esquerda))
-    direita = max(-1000, min(1000, direita))
+# =========================================
+# MOVIMENTO RETO COM CORREÇÃO DO IMU
+# =========================================
 
-    await motor_pair.move_tank_for_degrees(
-        motor_pair.PAIR_1,
-        int(cm),
-        esquerda,
-        direita
-    )
-
-#-----------------------------------------
-
-async def mover(cm, velocidade=500):
-    circunferencia = 16.014
-    cm_distancia = int((cm / circunferencia) * 360)
-    vel_deg_s = max(-1000, min(1000, int(velocidade * 10)))
-
-    await motor_pair.move_for_degrees(
-        motor_pair.PAIR_1,
-        cm_distancia,
-        0,
-        velocity=vel_deg_s
-    )
-    motor_pair.stop(motor_pair.PAIR_1, stop=motor.BRAKE)
-
-#-----------------------------------------
-
-async def giro(angulo_alvo,vel):
-    motion_sensor.reset_yaw(0)
-    await runloop.sleep_ms(500)
-
-    if angulo_alvo > 0:
-        vel_esq, vel_dir = vel, -vel
+def pid(cm,velocidade = 200):
+    motor_esquerdo.reset_angle(0)
+    motor_direito.reset_angle(0)
+    if cm > 0:
+        direcao = 1
     else:
-        vel_esq, vel_dir = -vel, vel
-
-    alvo_decimos = abs(angulo_alvo * 10)
-
-    while abs(motion_sensor.tilt_angles()[0]) < alvo_decimos:
-        motor_pair.move_tank(motor_pair.PAIR_1, vel_esq, vel_dir)
-        await runloop.sleep_ms(10)
-
-    motor_pair.stop(motor_pair.PAIR_1, stop=motor.BRAKE)
-
-async def esperar(segundos):
-    await runloop.sleep_ms(int(segundos * 1000))
-
-#-----------------------------------------
-
-async def main():
-    await mover_garra1G(130,25)
-    await pid (84,600)
-    await giro (-20,250)
-    await pid (7, 500)
-    await giro (-40, 300)
-    await giro(35,500)
-    await pid(-14,400)
-    await giro(-50,200)
-    await mover(-10,100)
-    await pid(45,600)
-    await giro(-25,100)
-    await pid(8,300)
-    await giro(-35,100)
-    await pid(3,300)
-    await giro(-11,250)
-    await mover(-9,100)
-    await mover_garra1G(150,100)
-    await esperar(1)
-    await giro(3,10)
-    await mover(1,10)
-    await mover_garra1G(-76,5)
-    await mover(5,10)
-    await giro(-10,100)
-    await mover_garra1G(90,50)
-    await mover(3)
-    await giro(80,100)
-    await pid(25,400)
-    await giro(70,100)
-    await pid(70,500)
-    await giro(-15,100)
-    await pid(17,50)
+        direcao = -1
+    angulo_inicial = int(hub.imu.heading())
+    velocidade_base = velocidade * direcao
+    graus_alvo = int((cm / CIRCUNFERENCIA_RODA) * 360)
 
 
-runloop.run(main())
+    while min((abs(motor_esquerdo.angle()) , abs(motor_direito.angle())))  < abs(graus_alvo):
+
+            erro =angulo_inicial - hub.imu.heading() 
+            if erro > 180:
+                erro = erro - 360
+            elif erro < -180:
+                erro = erro + 360
+
+            correcao = 1.5 * erro
+            correcao = correcao * direcao
+
+            esquerda = int(velocidade_base + correcao)
+            direita = int(velocidade_base - correcao)
+
+            esquerda = max(-500, min(500, esquerda))
+            direita = max(-500, min(500, direita))
+
+            motor_esquerdo.run(esquerda)
+            motor_direito.run(direita)
+
+            wait(10)
+
+    motor_esquerdo.stop()
+    motor_direito.stop()
+# =========================================
+# MOVER EM CENTÍMETROS
+# =========================================
+
+def mover(cm, velocidade=720):
+
+    graus_de_movimento = int((cm / CIRCUNFERENCIA_RODA) * 360)
+    motor_esquerdo.run_angle(velocidade,graus_de_movimento,then=Stop.HOLD,wait=False)
+    motor_direito.run_angle(velocidade,graus_de_movimento,then=Stop.HOLD,wait=True)
+
+def mover2(cm):
+    robo.straight(cm *10)
+
+# =========================================
+# GIRO
+# =========================================
+
+def giro(angulo_alvo):
+    cronometro.reset()
+    trava_tempo.reset()
+    erro_anterior = 0
+    hub.imu.reset_heading(0)
+    while True:
+        angulo_atual = hub.imu.heading()
+        erro = angulo_alvo - angulo_atual
+        if abs(erro) < 0.5 or trava_tempo.time() > 2500:
+            break
+        dt = cronometro.time() / 1000.0
+        if dt == 0:
+            dt = 0.0001
+        cronometro.reset()
+        derivativo = (erro - erro_anterior) /dt 
+        erro_anterior = erro
+        correcao = (1.6 * erro) + (0.5 * derivativo)
+        correcao = max(-100, min(100,correcao))
+        potencia_esquerda = correcao
+        potencia_direita = -correcao
+        motor_esquerdo.dc(potencia_esquerda)
+        motor_direito.dc(potencia_direita)
+        wait(10)
+    motor_esquerdo.stop()
+    motor_direito.stop()   
+def giro2(graus):
+    robo.turn(graus) 
+    
+# =========================================
+# ESPERAR
+# =========================================
+
+def esperar(segundos):
+    wait(int(segundos * 1000))
+
+
+# =========================================
+# MAIN
+# =========================================
+
+def main():
+    mover_garra1G(130, 25)
+    pid(84, 600)
+    giro(-20, 250)
+    pid(7, 500)
+    giro(-40, 300)
+    giro(35, 500)
+    pid(-14, 400)
+    giro(-50, 200)
+    mover(-10, 100)
+    pid(45, 600)
+    giro(-25, 100)
+    pid(8, 300)
+    giro(-35, 100)
+    pid(3, 300)
+    giro(-11, 250)
+    mover(-9, 100)
+    mover_garra1G(150, 100)
+    esperar(1)
+    giro(3, 10)
+    mover(1, 10)
+    mover_garra1G(-76, 5)
+    mover(5, 10)
+    giro(-10, 100)
+    mover_garra1G(90, 50)
+    mover(3, 100) 
+    giro(80, 100)
+    pid(25, 400)
+    giro(70, 100)
+    pid(70, 500)
+    giro(-15, 100)
+    pid(17, 50)
+            
+
+main()
+
