@@ -12,8 +12,8 @@ garra2 = Motor(Port.A)
 cronometro = StopWatch()
 trava_tempo = StopWatch() 
 
-RODA_DIAMETRO = 5.1
-DISTANCIA_EIXOS = 12
+RODA_DIAMETRO = 51
+DISTANCIA_EIXOS = 120
 CIRCUNFERENCIA_RODA = 16.022
 
 
@@ -23,19 +23,15 @@ robo = DriveBase(
     RODA_DIAMETRO,
     DISTANCIA_EIXOS
 )
-robo.settings(
-    straight_speed=200,      
-    straight_acceleration=200,
-    turn_rate=160,           
-    turn_acceleration=200
-)
+robo.settings(200,200,160,200)
+
 
 
 # =========================================
 # GARRA 1
 # =========================================
 
-def mover_garra1G(graus, velocidade):
+def mover_garra2P(graus, velocidade):
     velocidade = max(-1000, min(1000, int(velocidade * 10)))
 
 
@@ -50,7 +46,7 @@ def mover_garra1G(graus, velocidade):
 # GARRA 2
 # =========================================
 
-def mover_garra2P(graus, velocidade):
+def mover_garra1G(graus, velocidade):
     velocidade = max(-1000, min(1000, int(velocidade * 10)))
 
     garra2.run_angle(
@@ -76,7 +72,7 @@ def pid(cm,velocidade = 200):
     graus_alvo = int((cm / CIRCUNFERENCIA_RODA) * 360)
 
 
-    while min((abs(motor_esquerdo.angle()) , abs(motor_direito.angle())))  < abs(graus_alvo):
+    while (abs(motor_esquerdo.angle()) + abs(motor_direito.angle())) / 2 < abs(graus_alvo):
 
             erro =angulo_inicial - hub.imu.heading() 
             if erro > 180:
@@ -84,7 +80,7 @@ def pid(cm,velocidade = 200):
             elif erro < -180:
                 erro = erro + 360
 
-            correcao = 1.5 * erro
+            correcao = 1.7 * erro
             correcao = correcao * direcao
 
             esquerda = int(velocidade_base + correcao)
@@ -113,11 +109,13 @@ def mover(cm, velocidade=720):
 def mover2(cm):
     robo.straight(cm *10)
 
+
 # =========================================
 # GIRO
 # =========================================
 
-def giro(angulo_alvo):
+def giro(angulo_alvo,velocidade_maxima):
+    angulo_alvo = angulo_alvo + 4.6
     cronometro.reset()
     trava_tempo.reset()
     erro_anterior = 0
@@ -125,7 +123,7 @@ def giro(angulo_alvo):
     while True:
         angulo_atual = hub.imu.heading()
         erro = angulo_alvo - angulo_atual
-        if abs(erro) < 0.5 or trava_tempo.time() > 2500:
+        if abs(erro) < 0.5 or trava_tempo.time() > 1500:
             break
         dt = cronometro.time() / 1000.0
         if dt == 0:
@@ -133,7 +131,7 @@ def giro(angulo_alvo):
         cronometro.reset()
         derivativo = (erro - erro_anterior) /dt 
         erro_anterior = erro
-        correcao = (1.6 * erro) + (0.5 * derivativo)
+        correcao = (3.5 * erro) + (0.35 * derivativo)
         correcao = max(-100, min(100,correcao))
         potencia_esquerda = correcao
         potencia_direita = -correcao
@@ -142,8 +140,7 @@ def giro(angulo_alvo):
         wait(10)
     motor_esquerdo.stop()
     motor_direito.stop()   
-def giro2(graus):
-    robo.turn(graus) 
+
     
 # =========================================
 # ESPERAR
@@ -158,21 +155,15 @@ def esperar(segundos):
 # =========================================
 
 def main():
-    mover(20, 500)
-    giro(80)
-    mover(30, 500)
-    giro(-45)
-    mover(17, 500)
-    mover_garra2(-80, 50)
-    mover(-1.5, 500)
-    mover_garra2(-45, 50)
-    mover(-1.5, 500)
-    mover_garra2(-30, 50) 
-    mover(-1.5, 50)
-    mover_garra2(-10, 50)
-    mover(-60, 100)
-    pid(-8)
 
+    mover(20, 500)
+    giro(90,30)
+    mover(24, 300)
+    giro(-50,30)
+    mover(27.8, 300)
+    mover_garra1G(-20, 100) 
+    mover (-1, 300)
+    mover_garra1G (-30, 100)
+    mover(-43, 600)
 
 main()
-
