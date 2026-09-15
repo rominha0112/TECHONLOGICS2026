@@ -118,7 +118,7 @@ def giro(angulo_alvo):
         cronometro.reset()
         derivativo = (erro - erro_anterior) /dt 
         erro_anterior = erro
-        correcao = (1.6 * erro) + (0.5 * derivativo)
+        correcao = (3.5 * erro) + (0.35 * derivativo)
         correcao = max(-100, min(100,correcao))
         potencia_esquerda = correcao
         potencia_direita = -correcao
@@ -145,10 +145,10 @@ def esperar(segundos):
 def main():
     mover_garra1G(130,100)
     mover_garra2P(-130,100)
-    pid(70, 600)
+    pid(70, 300)
     giro(-30)
-    pid(7, 500)
-    giro(-95)
+    pid(7, 100)
+    giro(-80)
     pid(-1)
     giro(65)
     pid(-18)
@@ -174,5 +174,4 @@ def main():
     giro(15)
     pid(17, 50)
             
-
 main()
