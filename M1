@@ -49,7 +49,7 @@ def mover_garra2P(graus, velocidade):
 # MOVIMENTO RETO COM CORREÇÃO DO IMU
 # =========================================
 
-def pid(cm,velocidade = 200):
+def pid(cm,velocidade = 500):
     motor_esquerdo.reset_angle(0)
     motor_direito.reset_angle(0)
     if cm > 0:
@@ -143,31 +143,30 @@ def esperar(segundos):
 # =========================================
 
 def main():
-    mover_garra1G(130,100)
-    mover_garra2P(-130,100)
-    pid(70, 300)
-    giro(-30)
-    pid(7, 100)
-    giro(-80)
-    pid(-1)
-    giro(65)
-    pid(-18)
+    mover_garra1G(130,20)
+    mover_garra2P(-140,30)
+    pid(69, 500)
+    giro(-20)
+    pid(9, 500)
+    giro(-70)
+    pid(-1,500)
+    giro(50)
+    pid(-15)
     giro(-90)
     mover(-10, 100)
-    pid(37, 600)
-    giro(-25)
-    pid(10, 300)
-    giro(-90)
-    mover(-9, 100)
+    pid(40, 600)
+    giro(-35)
+    pid(6, 300)
+    giro(-67)
+    mover(-7, 100)
     mover_garra1G(150, 100)
-    giro(8)
-    mover(-1, 10) #676767
-    mover_garra1G(-70, 50)
-    mover_garra1G(70,100)
-    giro(10)
-    mover_garra1G(90, 50)
-    mover(3, 100) 
-    giro(-90)
+    mover(-2)
+    mover_garra1G(-20,10)
+    giro (-10)
+    mover(4, 10)
+    mover_garra1G(-5) 
+    mover (-5, 50) 
+    giro(90)
     pid(25, 400)
     giro(-70)
     pid(70, 500)
