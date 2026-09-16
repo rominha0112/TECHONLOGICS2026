@@ -17,7 +17,7 @@ DISTANCIA_EIXOS = 12
 CIRCUNFERENCIA_RODA = 16.022
 
 
-robo = DriveBase(
+robo = DriveBase( 
     motor_esquerdo,
     motor_direito,
     RODA_DIAMETRO,
