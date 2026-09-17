@@ -1,0 +1,1 @@
+print('[MUNDO FÍSICO]: Rotação concluída e estabilizada em {}°'.format(hub.imu.heading()))
