@@ -5,7 +5,7 @@ from pybricks.robotics import DriveBase
 from pybricks.tools import wait,StopWatch
 
 hub = PrimeHub()
-motor_esquerdo = Motor(Port.C, Direction.COUNTERCLOCKWISE)
+motor_esquerdo = Motor(Port.C, Direction.COUNTERCLOCKWISE) 
 motor_direito = Motor(Port.D)
 garra1 = Motor(Port.E)
 garra2 = Motor(Port.A)
