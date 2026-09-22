@@ -16,8 +16,10 @@ RODA_DIAMETRO = 5.1
 DISTANCIA_EIXOS = 12
 CIRCUNFERENCIA_RODA = 16.022
 
-KD = 0.670
+KD = 0.57
 KP = 6.70
+
+K_LINE = 1.5
     
 robo = DriveBase(
     garra2,
@@ -79,7 +81,7 @@ def pid(cm,velocidade = 500):
             elif erro < -180:
                 erro = erro + 360
 
-            correcao = 1.5 * erro
+            correcao = K_LINE * erro
             correcao = correcao * direcao
 
             esquerda = int(velocidade_base + correcao)
@@ -112,12 +114,13 @@ def mover2(cm):
 # GIRO
 # =========================================
 
-def giro(angulo_alvo):#sempre somar 0.3 ao angulo alvo
+def giro(angulo_alvo):
     cronometro.reset()
     trava_tempo.reset()
     erro_anterior = 0
     derivativo = 0
     erro = 0
+    angulo_alvo = angulo_alvo + 2
     hub.imu.reset_heading(0)
     while True:
         angulo_atual = hub.imu.heading()
@@ -178,7 +181,7 @@ def esperar(segundos):
 # =========================================
 # Mover 2 garras
 # =========================================
-def M2G(graus, velocidade=720):
+def M2G(graus, velocidade=360):
     robo.turn(graus) 
     
 
@@ -188,5 +191,5 @@ def M2G(graus, velocidade=720):
 # =========================================
 
 def main():
-    giro(90.30)    
+    
 main()
