@@ -145,7 +145,8 @@ def giro(angulo_alvo,velocidade_maxima):
         motor_direito.dc(potencia_direita)
         wait(10)
     motor_esquerdo.stop()
-    motor_direito.stop()   
+    motor_direito.stop()
+    print('[MUNDO FÍSICO]: Rotação concluída e estabilizada em {}°'.format(hub.imu.heading()))
 def giro2(graus):
     robo.turn(graus) 
     
