@@ -75,7 +75,7 @@ def pid(cm,velocidade = 500):
 
             erro =angulo_inicial - hub.imu.heading() 
             if erro > 180:
-                erro = erro - 360
+                erro = erro - 360 
             elif erro < -180:
                 erro = erro + 360
 
