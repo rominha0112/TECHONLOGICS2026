@@ -16,7 +16,7 @@ RODA_DIAMETRO = 5.1
 DISTANCIA_EIXOS = 12
 CIRCUNFERENCIA_RODA = 16.022
 
-KD = 0.670
+KD = 0.57
 KP = 6.70
 
 K_LINE = 1.5
@@ -114,13 +114,12 @@ def mover2(cm):
 # GIRO
 # =========================================
 
-def giro(angulo_alvo):#sempre somar 0.3 ao angulo alvo
+def giro(angulo_alvo):
     cronometro.reset()
     trava_tempo.reset()
     erro_anterior = 0
     derivativo = 0
     erro = 0
-
     hub.imu.reset_heading(0)
     while True:
         angulo_atual = hub.imu.heading()
@@ -191,28 +190,23 @@ def M2G(graus, velocidade=360):
 # =========================================
 
 def main():
-    M2G(-140)
+    mover_garra1G(140,360)
+    mover(17)
+    giro(-55)
+    mover(38.5)
+    mover_garra2P(-40,100)
     mover(-3)
-    pid(25)
-    mover(18,90)
-    esperar(0.1)
-    pid(-20)
-    giro(90.30)
-    mover_garra2P(140,100)
-    mover(24, 300)
-    giro(-50)
-    pid(26)
-    mover_garra2P(-40, 100) 
-    mover (-2, 300)
-    mover_garra2P (-40, 100)
-    mover(-13, 600)
-    giro(-50.30)
+    mover_garra2P(-50,100)
+    mover(-10,90)
+    mover_garra2P(90,100)
+    giro(-35)
     mover(40)
-    giro(-35.30)
-    mover_garra1G(-100, 200)
-    mover(10)
-    mover_garra1G(50,100)
-    mover(-10)
+    giro(-65)
+    mover_garra1G(-120,100)
+    mover(20)
+    giro(35)
+    mover_garra1G(20,100)
+    mover(-15)
     giro(45)
-    mover(-30)
+    mover(-40)
 main()
