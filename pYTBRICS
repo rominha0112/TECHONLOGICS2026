@@ -15,9 +15,8 @@ trava_tempo = StopWatch()
 RODA_DIAMETRO = 5.1
 DISTANCIA_EIXOS = 12
 CIRCUNFERENCIA_RODA = 16.022
+X_TIME = 23.98
 
-KD = 0.57
-KP = 6.70
 
 K_LINE = 1.5
     
@@ -120,55 +119,29 @@ def giro(angulo_alvo):
     erro_anterior = 0
     derivativo = 0
     erro = 0
-    angulo_alvo = angulo_alvo + 2
     hub.imu.reset_heading(0)
-    while True:
+    Kp = angulo_alvo * X_TIME   
+    Kd = int((angulo_alvo * X_TIME )/0.8)  
+    t = int(angulo_alvo * X_TIME )
+    while trava_tempo.time() < t:
         angulo_atual = hub.imu.heading()
         erro = angulo_alvo - angulo_atual
-        if abs(erro) < 0.5 or trava_tempo.time() > 1000:
-            break
-        dt = cronometro.time() / 1000.0
-        if dt == 0:
-            dt = 0.0001
-        cronometro.reset()
-        derivativo = (erro - erro_anterior) /dt 
+        derivativo = (erro - erro_anterior) 
         erro_anterior = erro
-        correcao = (KP * erro) + (KD * derivativo)
-        correcao = max(-100, min(100,correcao))
+        correcao = int((Kp * erro) + (Kd * derivativo))
+        correcao = max(-100, min(200,correcao))
         potencia_esquerda = correcao
         potencia_direita = -correcao
-        motor_esquerdo.dc(potencia_esquerda)
-        motor_direito.dc(potencia_direita)
+        motor_esquerdo.run(potencia_esquerda)
+        motor_direito.run(potencia_direita)
         wait(10)
     motor_esquerdo.stop()
     motor_direito.stop() 
-    print('[MUNDO FÍSICO]: Rotação concluída e estabilizada em {}°'.format(hub.imu.heading()))  
+    print('[Relatório de giro]: Rotação concluída e estabilizada em {}°'.format(hub.imu.heading()))  
 def giro2(graus):
     robo.turn(graus) 
 
-def giropivo(angulo_alvo):
-    cronometro.reset()
-    trava_tempo.reset()
-    erro_anterior = 0
-    hub.imu.reset_heading(0)
-    while True:
-        angulo_atual = hub.imu.heading()
-        erro = angulo_alvo - angulo_atual
-        if abs(erro) < 0.5 or trava_tempo.time() > 1000:
-            break
-        dt = cronometro.time() / 1000.0
-        if dt == 0:
-            dt = 0.0001
-        cronometro.reset()
-        derivativo = (erro - erro_anterior) /dt 
-        erro_anterior = erro
-        correcao = (KP * erro) + (KD * derivativo)
-        correcao = max(-100, min(100,correcao))
-        potencia_esquerda = correcao
-        motor_esquerdo.dc(potencia_esquerda)
-        wait(10)
-    motor_esquerdo.stop()
-    motor_direito.stop()   
+
     
 # =========================================
 # ESPERAR
@@ -191,5 +164,5 @@ def M2G(graus, velocidade=360):
 # =========================================
 
 def main():
-    
+    giro(180)    
 main()
