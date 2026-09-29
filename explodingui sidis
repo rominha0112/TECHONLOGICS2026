@@ -119,6 +119,8 @@ def giro(angulo_alvo):
     derivativo = 0
     erro = 0
     hub.imu.reset_heading(0)
+    if angulo_alvo == 45: angulo_alvo = 49
+    if angulo_alvo == 55: angulo_alvo = 59
     while True:
         angulo_atual = hub.imu.heading()
         erro = angulo_alvo - angulo_atual
