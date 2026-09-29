@@ -16,8 +16,10 @@ RODA_DIAMETRO = 5.1
 DISTANCIA_EIXOS = 12
 CIRCUNFERENCIA_RODA = 16.022
 
-KD = 0.5
-KP = 5
+KD = 0.57
+KP = 6.70
+
+K_LINE = 1.5
     
 robo = DriveBase(
     garra2,
@@ -75,11 +77,11 @@ def pid(cm,velocidade = 500):
 
             erro =angulo_inicial - hub.imu.heading() 
             if erro > 180:
-                erro = erro - 360 
+                erro = erro - 360
             elif erro < -180:
                 erro = erro + 360
 
-            correcao = 1.5 * erro
+            correcao = K_LINE * erro
             correcao = correcao * direcao
 
             esquerda = int(velocidade_base + correcao)
@@ -119,6 +121,7 @@ def giro(angulo_alvo):
     derivativo = 0
     erro = 0
     hub.imu.reset_heading(0)
+    angulo_alvo = angulo_alvo + 2
     if angulo_alvo == 45: angulo_alvo = 49
     if angulo_alvo == 55: angulo_alvo = 59
     while True:
@@ -140,7 +143,8 @@ def giro(angulo_alvo):
         motor_direito.dc(potencia_direita)
         wait(10)
     motor_esquerdo.stop()
-    motor_direito.stop()   
+    motor_direito.stop() 
+    print('[MUNDO FÍSICO]: Rotação concluída e estabilizada em {}°'.format(hub.imu.heading()))  
 def giro2(graus):
     robo.turn(graus) 
 
@@ -179,7 +183,7 @@ def esperar(segundos):
 # =========================================
 # Mover 2 garras
 # =========================================
-def M2G(graus, velocidade=720):
+def M2G(graus, velocidade=360):
     robo.turn(graus) 
     
 
@@ -189,28 +193,27 @@ def M2G(graus, velocidade=720):
 # =========================================
 
 def main():
-    M2G(-150,30)
-    pid(70, 500)
-    giro(-20)
-    pid(8, 500)
-    giro(-70)
-    pid(-1,500)
-    giro(50)
-    pid(-15)
-    giro(-90)
-    mover(-8, 100)
-    pid(24.75, 600)
+    mover_garra1G(140,360)
+    mover(17)
     giro(90)
-    pid(23)
-    esperar(0.5)
-    pid(-9,50)
-    esperar(0.2)
-    pid(4.5)
-    giro(-90)
-    mover_garra1G(-100,100)
-    giro(-75)
+    mover(15)
+    giro (-45)
+    mover (27.5)
+    mover_garra2P(-42,100)
+    mover(-3)
+    mover_garra2P(-63,100)
+    mover(-15,90)
+    mover_garra2P(90,90)
+    giro(-45)
     mover(40)
-    giro(35)
-    pid(17,50)
-    
+    giro(-55)
+    mover_garra1G(-90,100)
+    pid (15, 100)
+    mover_garra1G (30, 100)
+    mover(-15)
+    mover_garra1G (40, 100)
+    giro(45)
+    mover(-60)
+    giro (30)
+    mover (-20)
 main()
