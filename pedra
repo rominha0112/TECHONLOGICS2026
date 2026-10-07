@@ -233,18 +233,12 @@ def M2G(graus, velocidade=360):
 # =========================================
 
 def main():
-    M2G(-80)
-    pid(25)
-    M2G(120)
-    mover (-5)
-    esperar (0.7)
-    M2G (       120)
-    esperar(0.2)
+    pid(35,250)
+    esperar(0.1)
     mover(-5)
-    M2G (-120)
-    mover (5)
-    M2G (120)
-    mover (-5)
+    esperar(0.1)
+    mover(6)
+    mover(-30)
 
 
 
