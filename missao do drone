@@ -225,7 +225,51 @@ def esperar(segundos):
 # =========================================
 def M2G(graus, velocidade=360):
     robo.turn(graus) 
-    
+# =========================================
+#mover3
+# =========================================
+
+def mover3(cm, velocidade):
+
+    graus_de_movimento = int((360 / CIRCUNFERENCIA_RODA) * cm)
+    motor_esquerdo.run_angle(velocidade,graus_de_movimento,then=Stop.HOLD,wait=False)
+    motor_direito.run_angle(velocidade,graus_de_movimento,then=Stop.HOLD,wait=True)
+
+
+# =========================================
+#giro3
+#==========================================
+
+def girar (angulo_alvo, velocidade):
+    cronometro.reset()
+    trava_tempo.reset()
+    erro_anterior = 0
+    derivativo = 0
+    erro = 0
+    hub.imu.reset_heading(0)
+    if angulo_alvo == 45: angulo_alvo = 49
+    if angulo_alvo == 55: angulo_alvo = 59
+    while True:
+        angulo_atual = hub.imu.heading()
+        erro = angulo_alvo - angulo_atual
+        if abs(erro) < 0.5 or trava_tempo.time() > 1000:
+            break
+        dt = cronometro.time() / 1000.0
+        if dt == 0:
+            dt = 0.0001
+        cronometro.reset()
+        derivativo = (erro - erro_anterior) /dt 
+        erro_anterior = erro
+        correcao = (KP * erro) + (KD * derivativo)
+        correcao = max(-100, min(100,correcao))
+        potencia_esquerda = correcao
+        potencia_direita = -correcao
+        motor_esquerdo.dc(potencia_esquerda)
+        motor_direito.dc(potencia_direita)
+        wait(10)
+    motor_esquerdo.stop()
+    motor_direito.stop() 
+    print('[MUNDO FÍSICO]: Rotação concluída e estabilizada em {}°'.format(hub.imu.heading()))  
 
 
 # =========================================
@@ -233,12 +277,24 @@ def M2G(graus, velocidade=360):
 # =========================================
 
 def main():
-    pid (-67)
+    pid (75)
     giro (-35)
-    mover (-5)
-    giro (-55)
-    giro (55)
-    mover (9)
-    giro (-67)
-    mover (5)
+    esperar (0.5)
+    girar (-67, 300)
+    girar (67, 50)
+    mover3 (-9, 300)
+    girar (-80, 600)
+    mover (-8)
+    mover3 (57, 1200)
+    giro (-80)
+    mover (-7)
+    mover (7)
+    giro (100)
+    mover3 (21, 100)
+    girar (90, 20)
+    girar (90, 10)
+    mover (50)
+    giro (60)
+    mover3 (25, 200)
+    
 main()
