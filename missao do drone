@@ -10,7 +10,7 @@ motor_direito = Motor(Port.D)
 garra1 = Motor(Port.E)
 garra2 = Motor(Port.A)
 cronometro = StopWatch()
-trava_tempo = StopWatch() 
+trava_tempo = StopWatch()  
 
 RODA_DIAMETRO = 5.1
 DISTANCIA_EIXOS = 12
