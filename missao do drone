@@ -10,7 +10,7 @@ motor_direito = Motor(Port.D)
 garra1 = Motor(Port.E)
 garra2 = Motor(Port.A)
 cronometro = StopWatch()
-trava_tempo = StopWatch()  
+trava_tempo = StopWatch() 
 
 RODA_DIAMETRO = 5.1
 DISTANCIA_EIXOS = 12
@@ -107,6 +107,9 @@ def mover(cm, velocidade=720):
 
 def mover2(cm):
     robo.straight(cm *10)
+    
+def esperar(segundos):
+    wait(int(segundos * 1000))
 
 # =========================================
 # GIRO
@@ -119,8 +122,8 @@ def giro(angulo_alvo):
     derivativo = 0
     erro = 0
     hub.imu.reset_heading(0)
-    if angulo_alvo == 45: angulo_alvo = 49
-    if angulo_alvo == 55: angulo_alvo = 59
+    angulo_alvo = angulo_alvo + 2
+    esperar(0.1)
     while True:
         angulo_atual = hub.imu.heading()
         erro = angulo_alvo - angulo_atual
@@ -247,11 +250,13 @@ def mover3(cm, velocidade):
 # =========================================
 
 def main():
+    mover_garra1G(200, 300)
     mover_garra2P (-180, 300)
-    pid (75)
+    pid (74) # Não mexer nem se o menino do 67 pedir
     giro (-35)
-    mover(2)
-    giro (-80)
+    mover(3)
+    giro (-67)
+    mover (-4)
     esperar (0.5)
     giro(90)
     mover (-17)
@@ -260,29 +265,21 @@ def main():
     mover (57)
     giro (-90)
     mover (-7,1000)
-    mover (7)
-    giro (90)
-    mover (17)
-    giro (-100)
-    mover (-45)
-    giro (-45)
-    mover (-12,100)
-    mover(12)
-    giro(90)
-    mover(-25,200)
-    mover(3)
-    giro(45)
-    mover(10)
-    mover_garra2P(180,1000)
-    mover(-10)
+    mover (10)
+    giro (80)
+    mover_garra1G (-200, 300)
+    mover (10)
+    mover_garra1G(120, 1000)
+    mover (-11)
     mover(5)
-    mover_garra2P(-180,1000)
-    mover(-5)
-    giro(-90)
+    giro (45)
+    mover (20)
+    giro(35)
+    mover(35)
+    giro(-45)
+    mover(15,100)
     mover(-10)
     giro(90)
-    mover(-40)
-    giro(-90)
-    mover(-10)
+    mover(10)
     
 main()
