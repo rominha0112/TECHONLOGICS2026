@@ -250,7 +250,7 @@ def mover3(cm, velocidade):
 # =========================================
 
 def main():
-    mover_garra1G(200, 300)
+    mover_garra1G(220, 300)
     mover_garra2P (-180, 300)
     pid (74) # Não mexer nem se o menino do 67 pedir
     giro (-35)
@@ -264,7 +264,7 @@ def main():
     mover(-5)
     mover (57)
     giro (-90)
-    mover (-7,1000)
+    mover (-10,1000)
     mover (10)
     giro (80)
     mover_garra1G (-200, 300)
