@@ -105,8 +105,6 @@ def mover(cm, velocidade=720):
     motor_esquerdo.run_angle(velocidade,graus_de_movimento,then=Stop.HOLD,wait=False)
     motor_direito.run_angle(velocidade,graus_de_movimento,then=Stop.HOLD,wait=True)
 
-def mover2(cm):
-    robo.straight(cm *10)
     
 def esperar(segundos):
     wait(int(segundos * 1000))
@@ -121,8 +119,9 @@ def giro(angulo_alvo):
     erro_anterior = 0
     derivativo = 0
     erro = 0
+    angulo_alvo1 = angulo_alvo
     hub.imu.reset_heading(0)
-    angulo_alvo = angulo_alvo + 2
+    angulo_alvo = int(angulo_alvo + 2)
     esperar(0.1)
     while True:
         angulo_atual = hub.imu.heading()
@@ -144,9 +143,11 @@ def giro(angulo_alvo):
         wait(10)
     motor_esquerdo.stop()
     motor_direito.stop() 
-    print('[MUNDO FÍSICO]: Rotação concluída e estabilizada em {}°'.format(hub.imu.heading()))  
-def giro2(graus):
-    robo.turn(graus) 
+    esperar(0.1)
+    print('[MUNDO FÍSICO]: Rotação concluída e estabilizada em {}°, com intenção de {} °'.format(hub.imu.heading(), angulo_alvo1) )
+    print("Erro:{}".format( angulo_alvo1 - hub.imu.heading())) 
+   
+
 
 def giropivo(angulo_alvo):
     cronometro.reset()
@@ -173,54 +174,8 @@ def giropivo(angulo_alvo):
     motor_direito.stop()   
 
 
-# =========================================
-# MOVIMENTO RETO COM CORREÇÃO DO IMU
-# =========================================
-
-def pid(cm,velocidade = 500):
-
-    if cm > 0:
-        direcao = 1
-    else:
-        direcao = -1
-    angulo_inicial = int(hub.imu.heading())
-    velocidade_base = velocidade * direcao
-    graus_alvo = int((cm / CIRCUNFERENCIA_RODA) * 360)
-    erro = angulo_inicial - int(hub.imu.heading())
-    erro_anterior = 0
-    
 
 
-    while min((abs(motor_esquerdo.angle()) , abs(motor_direito.angle())))  < abs(graus_alvo):
-            erro = angulo_inicial - int(hub.imu.heading())
-            if erro > 180:
-                erro = erro - 360
-            elif erro < -180:
-                erro = erro + 360
-            erro = erro_anterior - erro
-            correcao = K_LINE * erro 
-            correcao = correcao + direcao
-            erro_anterior = erro/2
-
-            esquerda = int(velocidade_base - correcao * 0.5)
-            direita = int(velocidade_base + correcao *0.1)
-
-            
-
-            motor_esquerdo.run(esquerda)
-            motor_direito.run(direita)
-
-            wait(10)
-
-    motor_esquerdo.stop()
-    motor_direito.stop()
-    
-# =========================================
-# ESPERAR
-# =========================================
-
-def esperar(segundos):
-    wait(int(segundos * 1000))
     
 
 # =========================================
@@ -228,58 +183,60 @@ def esperar(segundos):
 # =========================================
 def M2G(graus, velocidade=360):
     robo.turn(graus) 
-# =========================================
-#mover3
-# =========================================
-
-def mover3(cm, velocidade):
-
-    graus_de_movimento = int((360 / CIRCUNFERENCIA_RODA) * cm)
-    motor_esquerdo.run_angle(velocidade,graus_de_movimento,then=Stop.HOLD,wait=False)
-    motor_direito.run_angle(velocidade,graus_de_movimento,then=Stop.HOLD,wait=True)
-
-
-# =========================================
-#giro3
-#==========================================
-
-
-
+       
 # =========================================
 # MAIN
 # =========================================
 
 def main():
-    mover_garra1G(220, 300)
+    mover_garra1G(200, 300)
     mover_garra2P (-180, 300)
-    pid (74) # Não mexer nem se o menino do 67 pedir
-    giro (-35)
+    pid (77) # Não mexer nem se o menino do 67 pedir
+    giro (-40)
     mover(3)
-    giro (-67)
+    giro (-60)
     mover (-4)
     esperar (0.5)
-    giro(90)
+    giro(20)
+    giro(40)
     mover (-17)
     giro (-90)
     mover(-5)
     mover (57)
     giro (-90)
     mover (-10,1000)
-    mover (10)
-    giro (80)
-    mover_garra1G (-200, 300)
-    mover (10)
-    mover_garra1G(120, 1000)
-    mover (-11)
-    mover(5)
-    giro (45)
-    mover (20)
-    giro(35)
-    mover(35)
+    mover (2)
+    giro(-20)
+    mover(-2)
+    giro(20)
+    mover(8.5)
+    giro (70)
+    mover_garra1G(-170,100)
+    mover(15)
+    esperar(1)
+    mover_garra1G(80,100)
+    mover(-7.5)
+    mover_garra1G(-30,100)
+    mover(-6)
+    giro(45)
+    mover(22)
+    giro(45)
+    mover(27)
+    giro(-180)
+    mover(-13)
     giro(-45)
-    mover(15,100)
-    mover(-10)
-    giro(90)
+    mover(-20,100)
     mover(10)
+    giro(90)
+    mover(-20)
+    mover(5)
+    giro(115)
+    mover_garra1G(-70,1000)
+    mover(40)
+    mover_garra1G(40,1000)
+
+
+    
+    
     
 main()
