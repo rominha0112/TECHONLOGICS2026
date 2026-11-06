@@ -16,10 +16,10 @@ RODA_DIAMETRO = 5.1
 DISTANCIA_EIXOS = 12
 CIRCUNFERENCIA_RODA = 16.022
 
-KD = 0.57
+KD = 1.1
 KP = 6.70
 
-K_LINE = 0.75
+K_LINE = 1.1
 robo = DriveBase(
     garra2,
     garra1,
@@ -52,8 +52,8 @@ def mover_garra2P(graus, velocidade):
     garra2.run_angle(
         velocidade,
         int(graus * 2.49),
-       then=Stop.HOLD
-    ) 
+        then=Stop.HOLD
+    )
 
 
 # =========================================
@@ -87,9 +87,17 @@ def pid(cm,velocidade = 500):
 
             esquerda = max(-500, min(500, esquerda))
             direita = max(-500, min(500, direita))
-
+            
             motor_esquerdo.run(esquerda)
             motor_direito.run(direita)
+            erro = angulo_inicial - int(hub.imu.heading())
+            esquerda = esquerda - erro *2 
+            direita = direita + erro  
+            motor_esquerdo.run(esquerda/2)
+            motor_direito.run(direita/2)
+            
+
+
 
             wait(10)
 
@@ -105,15 +113,15 @@ def mover(cm, velocidade=720):
     motor_esquerdo.run_angle(velocidade,graus_de_movimento,then=Stop.HOLD,wait=False)
     motor_direito.run_angle(velocidade,graus_de_movimento,then=Stop.HOLD,wait=True)
 
-    
-def esperar(segundos):
-    wait(int(segundos * 1000))
+def mover2(cm):
+    robo.straight(cm *10)
 
 # =========================================
 # GIRO
 # =========================================
 
-def giro(angulo_alvo, velocidade_maxima = 700):
+
+def giro_emanobico(angulo_alvo, velocidade_maxima = 700):
     cronometro.reset()
     trava_tempo.reset()
     erro_anterior = 0
@@ -162,10 +170,70 @@ def giro(angulo_alvo, velocidade_maxima = 700):
     print('[MUNDO FÍSICO]: Rotação concluída e estabilizada em {}°, com intenção de {} °'.format(hub.imu.heading(), angulo_alvo1) )
     print("Erro:{}".format(angulo_alvo1 - hub.imu.heading()))
 
+def giro(angulo_alvo , velocidade_maxima=720):
+    cronometro.reset()
+    trava_tempo.reset()
+    erro_anterior = 0
+    hub.imu.reset_heading(0)
+    esperar(0.1)
+    angulo_alvo = angulo_alvo + 5
+    
+    KD = 0.5
+    if angulo_alvo % 5 ==0: angulo_alvo = angulo_alvo - 5
+    
    
+    while True:
+        angulo_atual = hub.imu.heading()
+        erro = angulo_alvo - angulo_atual
+        
+        if erro > 180:
+            erro -= 360
+        elif erro < -180:
+            erro += 360
+            
+        
+        if abs(erro) < 1.5 or trava_tempo.time() > 1500:
+            break
+            
+        dt = cronometro.time() / 1000.0
+        if dt == 0:
+            dt = 0.0001
+        cronometro.reset()
+        
+        derivativo = (erro - erro_anterior) / dt
+        erro_anterior = erro
+        
+        kp_dinamico = abs(angulo_atual) * 0.2 + 2.0
+        correcao = (kp_dinamico * erro) + (KD * derivativo)
+        correcao = max(-velocidade_maxima, min(velocidade_maxima, correcao))
+        
+        motor_esquerdo.run(correcao)
+        motor_direito.run(-correcao)
+        
+        wait(10)
+        
+    motor_esquerdo.stop()
+    motor_direito.stop()
+    wait(50) 
+   
+    cronometro_ajuste = StopWatch()
+    
+   
+    esperar(0.5)
+    motor_esquerdo.stop()
+    motor_direito.stop()
+    
+    angulo_final_real = hub.imu.heading()
+    print('[MUNDO FÍSICO]: Giro finalizado.')
+    print('Ângulo Atual: {}° + Erro Remanescente: {}° = Total: {}°'.format(
+        angulo_final_real, 
+        (angulo_alvo - angulo_final_real), 
+        angulo_final_real + (angulo_alvo - angulo_final_real)
+    ))
+def giro2(graus):
+    robo.turn(graus) 
 
-
-def giropivo(angulo_alvo, velocidade_maxima= 700):
+def giropivo(angulo_alvo):
     cronometro.reset()
     trava_tempo.reset()
     erro_anterior = 0
@@ -182,17 +250,19 @@ def giropivo(angulo_alvo, velocidade_maxima= 700):
         derivativo = (erro - erro_anterior) /dt 
         erro_anterior = erro
         correcao = (KP * erro) + (KD * derivativo)
-        correcao = max(-velocidade_maxima, min(velocidade_maxima, correcao))
         correcao = max(-100, min(100,correcao))
         potencia_esquerda = correcao
         motor_esquerdo.dc(potencia_esquerda)
         wait(10)
     motor_esquerdo.stop()
     motor_direito.stop()   
+    
+# =========================================
+# ESPERAR
+# =========================================
 
-
-
-
+def esperar(segundos):
+    wait(int(segundos * 1000))
     
 
 # =========================================
@@ -200,6 +270,8 @@ def giropivo(angulo_alvo, velocidade_maxima= 700):
 # =========================================
 def M2G(graus, velocidade=360):
     robo.turn(graus) 
+    
+
        
 # =========================================
 # MAIN
