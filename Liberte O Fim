@@ -1,0 +1,448 @@
+from pybricks.hubs import PrimeHub
+from pybricks.pupdevices import Motor
+from pybricks.parameters import Port, Direction,Stop
+from pybricks.robotics import DriveBase
+from pybricks.tools import wait,StopWatch,hub_menu
+
+hub = PrimeHub()
+motor_esquerdo = Motor(Port.C, Direction.COUNTERCLOCKWISE)
+motor_direito = Motor(Port.D)
+garra1 = Motor(Port.E)
+garra2 = Motor(Port.A)
+cronometro = StopWatch()
+trava_tempo = StopWatch() 
+
+RODA_DIAMETRO = 5.1
+DISTANCIA_EIXOS = 12
+CIRCUNFERENCIA_RODA = 16.022
+
+KD = 1.1
+KP = 6.70
+
+K_LINE = 1.1
+robo = DriveBase(
+    garra2,
+    garra1,
+    RODA_DIAMETRO,
+    DISTANCIA_EIXOS
+)
+
+# =========================================
+# GARRA 1
+# =========================================
+
+def mover_garra1G(graus, velocidade):
+    velocidade = max(-1000, min(1000, int(velocidade * 10)))
+
+
+    garra1.run_angle(
+        velocidade,
+        int(graus * 2.49),
+        then=Stop.HOLD
+    )
+
+
+# =========================================
+# GARRA 2
+# =========================================
+
+def mover_garra2P(graus, velocidade = 1000):
+    velocidade = max(-1000, min(1000, int(velocidade * 10)))
+
+    garra2.run_angle(
+        velocidade,
+        int(graus * 2.49),
+        then=Stop.HOLD
+    )
+
+
+# =========================================
+# MOVIMENTO RETO COM CORREÇÃO DO IMU
+# =========================================
+
+def pid(cm,velocidade = 500):
+
+    if cm > 0:
+        direcao = 1
+    else:
+        direcao = -1
+    angulo_inicial = int(hub.imu.heading())
+    velocidade_base = velocidade * direcao
+    graus_alvo = int((cm / CIRCUNFERENCIA_RODA) * 360)
+
+
+    while min((abs(motor_esquerdo.angle()) , abs(motor_direito.angle())))  < abs(graus_alvo):
+
+            erro = angulo_inicial - int(hub.imu.heading()) 
+            if erro > 180:
+                erro = erro - 360
+            elif erro < -180:
+                erro = erro + 360
+
+            correcao = K_LINE * erro
+            correcao = correcao * direcao
+
+            esquerda = int(velocidade_base - correcao)
+            direita = int(velocidade_base + correcao)
+
+            esquerda = max(-500, min(500, esquerda))
+            direita = max(-500, min(500, direita))
+            
+            motor_esquerdo.run(esquerda)
+            motor_direito.run(direita)
+            erro = angulo_inicial - int(hub.imu.heading())
+            esquerda = esquerda - erro *2 
+            direita = direita + erro  
+            motor_esquerdo.run(esquerda/2)
+            motor_direito.run(direita/2)
+            
+
+
+
+            wait(10)
+
+    motor_esquerdo.stop()
+    motor_direito.stop()
+# =========================================
+# MOVER EM CENTÍMETROS
+# =========================================
+
+def mover(cm, velocidade=1000):
+
+    graus_de_movimento = int((360 / CIRCUNFERENCIA_RODA) * cm)
+    motor_esquerdo.run_angle(velocidade,graus_de_movimento,then=Stop.HOLD,wait=False)
+    motor_direito.run_angle(velocidade,graus_de_movimento,then=Stop.HOLD,wait=True)
+
+def mover2(cm):
+    robo.straight(cm *10)
+
+# =========================================
+# GIRO
+# =========================================
+
+
+def giro_emanobico(angulo_alvo, velocidade_maxima = 700):
+    cronometro.reset()
+    trava_tempo.reset()
+    erro_anterior = 0
+    derivativo = 0
+    erro = 0
+    angulo_alvo1 = angulo_alvo
+    hub.imu.reset_heading(0)
+    
+
+    angulo_alvo = int(angulo_alvo + 2) 
+    esperar(0.1)
+    
+    while True:
+        angulo_atual = hub.imu.heading()
+        erro = angulo_alvo - angulo_atual
+        
+
+        if abs(erro) < 0.5 or trava_tempo.time() > 1000:
+            break
+            
+        dt = cronometro.time() / 1000.0
+        if dt == 0:
+            dt = 0.0001
+        cronometro.reset()
+        
+        derivativo = (erro - erro_anterior) / dt 
+        erro_anterior = erro
+        
+        correcao = (KP * erro) + (KD * derivativo)
+        
+
+        correcao = max(-velocidade_maxima, min(velocidade_maxima, correcao))
+        
+        velocidade_esquerda = correcao
+        velocidade_direita = -correcao
+
+        motor_esquerdo.run(velocidade_esquerda)
+        motor_direito.run(velocidade_direita)
+        
+        wait(10)
+        
+    motor_esquerdo.stop()
+    motor_direito.stop() 
+    esperar(0.1)
+    
+    print('[MUNDO FÍSICO]: Rotação concluída e estabilizada em {}°, com intenção de {} °'.format(hub.imu.heading(), angulo_alvo1) )
+    print("Erro:{}".format(angulo_alvo1 - hub.imu.heading()))
+
+def giro(angulo_alvo , velocidade_maxima=720):
+    cronometro.reset()
+    trava_tempo.reset()
+    erro_anterior = 0
+    hub.imu.reset_heading(0)
+    esperar(0.1)
+    
+    
+    KD = 0.5
+   
+    
+   
+    while True:
+        angulo_atual = hub.imu.heading()
+        erro = angulo_alvo - angulo_atual
+        
+        if erro > 180:
+            erro -= 360
+        elif erro < -180:
+            erro += 360
+            
+        
+        elif abs(erro) < 1.5 or trava_tempo.time() > 1500:
+            break
+            
+        dt = cronometro.time() / 1000.0
+        if dt == 0:
+            dt = 0.0001
+        cronometro.reset()
+        
+        derivativo = (erro - erro_anterior) / dt
+        erro_anterior = erro
+        
+        kp_dinamico = abs(angulo_atual) * 0.2 + 2.0
+        correcao = (kp_dinamico * erro) + (KD * derivativo)
+        correcao = max(-velocidade_maxima, min(velocidade_maxima, correcao))
+        
+        motor_esquerdo.run(correcao)
+        motor_direito.run(-correcao)
+        
+        wait(10)
+        
+    motor_esquerdo.stop()
+    motor_direito.stop()
+    wait(50) 
+   
+    cronometro_ajuste = StopWatch()
+    
+   
+    esperar(0.5)
+    motor_esquerdo.stop()
+    motor_direito.stop()
+    
+    angulo_final_real = hub.imu.heading()
+    print('[MUNDO FÍSICO]: Giro finalizado.')
+    print('Ângulo Atual: {}° + Erro Remanescente: {}° = Total: {}°'.format(
+        angulo_final_real, 
+        (angulo_alvo - angulo_final_real), 
+        angulo_final_real + (angulo_alvo - angulo_final_real)
+    ))
+def giro2(graus):
+    robo.turn(graus) 
+
+def giropivo(angulo_alvo):
+    cronometro.reset()
+    trava_tempo.reset()
+    erro_anterior = 0
+    hub.imu.reset_heading(0)
+    while True:
+        angulo_atual = hub.imu.heading()
+        erro = angulo_alvo - angulo_atual
+        if abs(erro) < 0.5 or trava_tempo.time() > 1000:
+            break
+        dt = cronometro.time() / 1000.0
+        if dt == 0:
+            dt = 0.0001
+        cronometro.reset()
+        derivativo = (erro - erro_anterior) /dt 
+        erro_anterior = erro
+        correcao = (KP * erro) + (KD * derivativo)
+        correcao = max(-100, min(100,correcao))
+        potencia_esquerda = correcao
+        motor_esquerdo.dc(potencia_esquerda)
+        wait(10)
+    motor_esquerdo.stop()
+    motor_direito.stop()   
+    
+# =========================================
+# ESPERAR
+# =========================================
+
+def esperar(segundos):
+    wait(int(segundos * 1000))
+    
+
+# =========================================
+# Mover 2 garras
+# =========================================
+def M2G(graus, velocidade=360):
+    robo.turn(graus) 
+    
+
+
+# =========================================
+# MAIN
+# =========================================
+
+def main():
+    escolha = hub_menu("1", "2","3","4","5","6","7","8")
+    print(escolha)
+
+    if escolha == "1":
+        mover_garra1G(140, 3000)
+        mover(15,3000)
+        giro(90)
+        esperar(0.1)
+        mover(16,3000)
+        giro(-40)
+        esperar(0.1)
+        mover(30,3000)
+        mover_garra2P(-45, 500)
+        mover(-2,200)
+        mover_garra2P(-63, 100)
+        mover(-15,100)
+        mover_garra2P(100, 90)
+        giro(-55)
+        esperar(0.2)
+        mover(40,3000)
+        giro(-43)
+        mover_garra1G(-100, 3000)
+        mover(11,3000)
+        mover_garra1G(38,3000)
+        mover(-10)
+        mover_garra1G(40,3000)
+        giro(54)
+        mover(-70,99999)
+
+
+    elif escolha == "2":
+        pid (32, 1000)
+        esperar(0.1)
+        mover(-30, 900)
+
+    elif escolha == "3":
+        M2G(-99, 1000)
+        mover(81,800)
+        M2G (30, 10000)
+        mover (5, 10000)
+        M2G(435, 10000)
+        pid(3,1000)
+        M2G(-40, 10000)
+        mover(-8)
+        M2G (-190, 10000)
+        mover (-50, 10000)
+        giro_emanobico(45, 99999)
+        mover(-30,9999)
+
+    elif escolha == "4":
+        mover_garra1G(200, 300)
+        mover_garra2P(-180, 300)
+        pid(77)  # Não mexer nem se o menino do 67 pedir
+        giro(-40)
+        mover(3)
+        giro(-60)
+        mover(-4)
+        esperar(0.5)
+        giro(20)
+        giro(40)
+        mover(-17)
+        giro(-90)
+        mover(-5)
+        mover(57)
+        giro(-90)
+        mover(-10, 1000)
+        mover(2)
+        giro(-20)
+        mover(-2)
+        giro(20)
+        mover(8.5)
+        giro(70)
+        mover_garra1G(-170, 100)
+        mover(15)
+        esperar(1)
+        mover_garra1G(80, 100)
+        mover(-7.5)
+        mover_garra1G(-30, 100)
+        mover(-6)
+        giro(45)
+        mover(22)
+        giro(45)
+        mover(27)
+        giro(-180)
+        mover(-13)
+        giro(-45)
+        mover(-20, 100)
+        mover(10)
+        giro(90)
+        mover(-20)
+        mover(5)
+        giro(115)
+        mover_garra1G(-70, 1000)
+        mover(40)
+        mover_garra1G(40, 1000)
+
+    elif escolha == "5":
+        mover_garra2P(-150, 100)
+        mover(45, 800)
+        giro(62, 400)
+        mover(2, 800)
+        mover_garra1G(70, 10)
+        giro(-5)
+        mover(-5, 800)
+        giro(-70)
+        mover(-20, 800)
+        mover_garra1G(180, 99999)
+        mover_garra1G(-240, 200)
+        mover(10)
+        giro(40, 600)
+        mover_garra2P(140, 30)
+        mover(12, 200)
+        mover_garra2P(-70, 20)
+        mover(-10, 100)
+        giro(60, 50)
+        mover(-5, 200)
+        mover_garra2P(150, 20)
+        mover(-6)
+        giro(-120)
+        mover(-40)
+
+    elif escolha == "6":
+        mover(-59)
+        mover_garra2P(-150, 30)
+        mover(60)
+
+    elif escolha == "7":
+        mover_garra2P(-130, 720)
+        mover(71, 700)
+        giro(38, 200)
+        mover(8)
+        mover_garra1G(-360, 1000)
+        mover_garra1G(290, 1000)
+        mover(-20)
+        giro(-50, 1000)
+        mover(-50, 1000)
+
+    elif escolha == "8":
+        mover_garra2P(-120)
+        mover(1.5)
+        giro(-55)
+        mover(57)
+        giro(130)
+        mover_garra1G(120)
+        giro(360)
+        mover(65)
+        mover_garra1G(167)
+        mover_garra1G(-250)
+        mover(-10)
+        giro(-90)
+        mover(-10)
+        mover(10)
+        giro(-55)
+        mover(52)
+        giro(19.13)
+        mover(5)
+        mover_garra1G(-30)
+        giro(-12)
+        mover_garra1G(80, 10)
+        mover_garra1G(80, 10)
+        mover(-50)
+
+    
+
+    
+
+
+main()
