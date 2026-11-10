@@ -121,115 +121,93 @@ def mover2(cm):
 # =========================================
 
 
-def giro_emanobico(angulo_alvo, velocidade_maxima = 700):
-    cronometro.reset()
+
+    
+    
+
+
+def giro(angulo_alvo, velocidade_maxima=190):
+    trava_tempo = StopWatch()
+    cronometro = StopWatch()
     trava_tempo.reset()
-    erro_anterior = 0
-    derivativo = 0
-    erro = 0
-    angulo_alvo1 = angulo_alvo
-    hub.imu.reset_heading(0)
-    
-
-    angulo_alvo = int(angulo_alvo + 2) 
-    esperar(0.1)
-    
-    while True:
-        angulo_atual = hub.imu.heading()
-        erro = angulo_alvo - angulo_atual
-        
-
-        if abs(erro) < 0.5 or trava_tempo.time() > 1000:
-            break
-            
-        dt = cronometro.time() / 1000.0
-        if dt == 0:
-            dt = 0.0001
-        cronometro.reset()
-        
-        derivativo = (erro - erro_anterior) / dt 
-        erro_anterior = erro
-        
-        correcao = (KP * erro) + (KD * derivativo)
-        
-
-        correcao = max(-velocidade_maxima, min(velocidade_maxima, correcao))
-        
-        velocidade_esquerda = correcao
-        velocidade_direita = -correcao
-
-        motor_esquerdo.run(velocidade_esquerda)
-        motor_direito.run(velocidade_direita)
-        
-        wait(10)
-        
-    motor_esquerdo.stop()
-    motor_direito.stop() 
-    esperar(0.1)
-    
-    print('[MUNDO FÍSICO]: Rotação concluída e estabilizada em {}°, com intenção de {} °'.format(hub.imu.heading(), angulo_alvo1) )
-    print("Erro:{}".format(angulo_alvo1 - hub.imu.heading()))
-
-def giro(angulo_alvo , velocidade_maxima=720):
     cronometro.reset()
-    trava_tempo.reset()
+    
     erro_anterior = 0
+
     hub.imu.reset_heading(0)
-    esperar(0.1)
+    esperar(0.3)
+
     
-    
-    KD = 0.5
-   
-    
-   
+
+    KD = angulo_alvo /20
+
     while True:
+
         angulo_atual = hub.imu.heading()
+
         erro = angulo_alvo - angulo_atual
+
         
         if erro > 180:
-            erro -= 360
+           erro -= 360
+
         elif erro < -180:
             erro += 360
-            
-        
-        elif abs(erro) < 1.5 or trava_tempo.time() > 1500:
+
+       
+        if trava_tempo.time() >= 1200 or abs(erro) < 1:
             break
-            
+
         dt = cronometro.time() / 1000.0
+
         if dt == 0:
             dt = 0.0001
+
         cronometro.reset()
-        
+
         derivativo = (erro - erro_anterior) / dt
+
         erro_anterior = erro
+
+        KD=3.5
+        KP=1.2
+
+        correcao = (KP * erro) + (KD * derivativo)
+
         
-        kp_dinamico = abs(angulo_atual) * 0.2 + 2.0
-        correcao = (kp_dinamico * erro) + (KD * derivativo)
-        correcao = max(-velocidade_maxima, min(velocidade_maxima, correcao))
-        
-        motor_esquerdo.run(correcao)
-        motor_direito.run(-correcao)
-        
+        correcao = max(
+            -velocidade_maxima,
+            min(velocidade_maxima, correcao)
+        )
+
+        motor_esquerdo.run(-correcao)
+        motor_direito.run(correcao)
+
         wait(10)
-        
+
     motor_esquerdo.stop()
     motor_direito.stop()
-    wait(50) 
-   
+
+    wait(50)
+
+    
+
     cronometro_ajuste = StopWatch()
-    
-   
+
     esperar(0.5)
-    motor_esquerdo.stop()
-    motor_direito.stop()
-    
+
     angulo_final_real = hub.imu.heading()
+
     print('[MUNDO FÍSICO]: Giro finalizado.')
-    print('Ângulo Atual: {}° + Erro Remanescente: {}° = Total: {}°'.format(
-        angulo_final_real, 
-        (angulo_alvo - angulo_final_real), 
-        angulo_final_real + (angulo_alvo - angulo_final_real)
-    ))
+
+    print(
+        'Ângulo Atual: {}° + Erro Remanescente: {}° = Total: {}°'.format(
+            angulo_final_real,
+            angulo_alvo - angulo_final_real,
+            angulo_final_real + (angulo_alvo - angulo_final_real)
+        )
+    )
+
 def giro2(graus):
     robo.turn(graus) 
 
@@ -278,7 +256,7 @@ def M2G(graus, velocidade=360):
 # =========================================
 
 def main():
-    escolha = hub_menu("1", "2","3","4","5","6","7","8")
+    escolha = hub_menu("1", "2","3","4","5","6","7","8","9")
     print(escolha)
 
     if escolha == "1":
@@ -314,38 +292,44 @@ def main():
         mover(-30, 900)
 
     elif escolha == "3":
-        M2G(-99, 1000)
-        mover(81,800)
-        M2G (30, 10000)
-        mover (5, 10000)
-        M2G(435, 10000)
-        pid(3,1000)
-        M2G(-40, 10000)
-        mover(-8)
-        M2G (-190, 10000)
-        mover (-50, 10000)
-        giro_emanobico(45, 99999)
-        mover(-30,9999)
+        M2G(-120, 10000)
+        mover(80,1000)
+        M2G(40, 10000)
+        mover (3,1000)
+        M2G (90, 1000)
+        mover (4, 1000)
+        M2G(40, 10000)
+        M2G(250,10000)
+        mover(2)
+        M2G (80, 10000)
+        mover (-6)
+        M2G(-400)
+        mover (-80, 10000)
+        giro(-90)
+        mover(10)
+
+        
 
     elif escolha == "4":
-        mover_garra1G(200, 300)
-        mover_garra2P(-180, 300)
-        pid(77)  # Não mexer nem se o menino do 67 pedir
-        giro(-40)
-        mover(3)
-        giro(-60)
-        mover(-4)
-        esperar(0.5)
+        M2G(-190,1000)
+        mover(77,800)  # Não mexer nem se o menino do 67 pedir
+        giro(40, 190)
+        mover(5, 800)
+        giro(30, 190)
+        mover(1.5, 500)
+        giro(60, 190)
+        mover(-7, 500)
+        esperar(0.2)
         giro(20)
         giro(40)
-        mover(-17)
+        mover(-16.5)
         giro(-90)
-        mover(-5)
+        mover(-10)
         mover(57)
         giro(-90)
         mover(-10, 1000)
         mover(2)
-        giro(-20)
+        giropivo(-20)
         mover(-2)
         giro(20)
         mover(8.5)
@@ -353,9 +337,9 @@ def main():
         mover_garra1G(-170, 100)
         mover(15)
         esperar(1)
-        mover_garra1G(80, 100)
+        mover_garra1G(60, 100)
         mover(-7.5)
-        mover_garra1G(-30, 100)
+        mover_garra1G(-100, 100)
         mover(-6)
         giro(45)
         mover(22)
@@ -439,6 +423,10 @@ def main():
         mover_garra1G(80, 10)
         mover_garra1G(80, 10)
         mover(-50)
+    elif escolha == "9":
+        giro(45,90)
+    
+    
 
     
 
